@@ -24,12 +24,13 @@ The following table lists the configurable parameters:
 
 ## Installation
 
+
+
+
 1. Install the chart:
 ```bash
-helm install aigw ./aigw-chart -f custom-values.yaml
+helm repo add sorinboia https://sorinboia.github.io/helm-aigw-ui/
+helm repo update
+helm install aigw-ui sorinboia/aigw-ui
 ```
 
-2. To upgrade:
-```bash
-helm upgrade aigw ./aigw-chart -f custom-values.yaml
-```
