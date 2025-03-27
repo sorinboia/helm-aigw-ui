@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - name: minio
+        image: {{ .Values.minio.image }}
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            set -e
+            ACCESS_KEY="{{ .Values.minio.accessKey }}"
+            SECRET_KEY="{{ .Values.minio.secretKey }}"
+            BUCKET_NAME="{{ .Values.minio.bucketName }}"
+
+            echo "Starting MinIO server..."
+            minio server /data --console-address :{{ .Values.minio.consolePort }} &
+
+            echo "Waiting for MinIO server to become ready..."
+            ATTEMPTS=0
+            MAX_ATTEMPTS=30
+            until curl -sf http://localhost:{{ .Values.minio.apiPort }}/minio/health/ready; do
+              ATTEMPTS=$((ATTEMPTS + 1))
+              if [ $ATTEMPTS -ge $MAX_ATTEMPTS ]; then
+                echo "MinIO server failed to start listening on port {{ .Values.minio.apiPort }} after $MAX_ATTEMPTS attempts."
+                exit 1
+              fi
+              echo "MinIO not ready yet (attempt $ATTEMPTS/$MAX_ATTEMPTS), waiting 2 seconds..."
+              sleep 2
+            done
+            echo "MinIO server is ready."
+
+            echo "Configuring mc alias..."
+            mc alias set local http://localhost:{{ .Values.minio.apiPort }} ${ACCESS_KEY} ${SECRET_KEY} --api s3v4
+
+            echo "Checking/Creating bucket '${BUCKET_NAME}'..."
+            if ! mc ls local/${BUCKET_NAME} > /dev/null 2>&1; then
+              mc mb local/${BUCKET_NAME}
+              echo "Bucket '${BUCKET_NAME}' created."
+            else
+              echo "Bucket '${BUCKET_NAME}' already exists."
+            fi
+
+            echo "Applying anonymous 'public' (read/write) policy to bucket '${BUCKET_NAME}'..."
+            mc anonymous set public local/${BUCKET_NAME}
+
+            echo "MinIO setup complete. Bringing server process to foreground."
+            wait
+        env:
+        - name: MINIO_ACCESS_KEY
+          value: {{ .Values.minio.accessKey | quote }}
+        - name: MINIO_SECRET_KEY
+          value: {{ .Values.minio.secretKey | quote }}
+        ports:
+        - containerPort: {{ .Values.minio.apiPort }}
+          name: api
+        - containerPort: {{ .Values.minio.consolePort }}
+          name: console
+        volumeMounts:
+        - name: minio-storage
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: {{ .Values.minio.apiPort }}
+          initialDelaySeconds: 45
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /minio/health/ready
+            port: {{ .Values.minio.apiPort }}
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: minio-storage
+        hostPath:
+          path: {{ .Values.minio.storage.hostPath }}
+          type: DirectoryOrCreate

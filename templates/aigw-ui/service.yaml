@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: aigw-ui
+  namespace: {{ .Values.namespace }}
+spec:
+  type: {{ .Values.aigwUi.service.type }}
+  selector:
+    app: aigw-ui
+  ports:
+    - protocol: TCP
+      port: {{ .Values.aigwUi.service.port }}
+      targetPort: {{ .Values.aigwUi.port }}
+      {{- if eq .Values.aigwUi.service.type "NodePort" }}
+      nodePort: {{ .Values.aigwUi.service.nodePort }}
+      {{- end }}

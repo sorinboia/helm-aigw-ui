@@ -1,0 +1,42 @@
+namespace: aigw
+
+serviceAccount:
+  name: full-access-sa
+
+minio:
+  image: quay.io/minio/minio:latest
+  accessKey: minioadmin
+  secretKey: minioadmin
+  bucketName: aigw
+  apiPort: 9000
+  consolePort: 3090
+  serviceData:
+    type: ClusterIP
+    port: 9000
+  serviceUI:
+    type: NodePort
+    port: 3090
+    nodePort: 30090
+  storage:
+    hostPath: /mnt/minio-data
+
+aigwUi:
+  image: sorinboiaf5/aigw-ui:latest
+  port: 3080
+  service:
+    type: NodePort
+    port: 3080
+    nodePort: 30080
+  env:
+    nodeEnv: production
+    k8sServiceAccountToken: full-access-sa
+    k8sNamespace: aigw
+    k8sConfigmapName: aigw
+    k8sDeploymentName: aigw
+    configsDir: ./configs
+    s3Endpoint: http://minio-data.aigw.svc.cluster.local:9000
+    s3AccessKey: minioadmin
+    s3SecretKey: minioadmin
+    s3BucketName: aigw
+  storage:
+    hostPath: /mnt/aigw-configs
