@@ -8,6 +8,6 @@ entries:
     digest: 8662feb95b9e68050073db0e3b2e741b6d9dd8cb0fef3810cc31ae3a73feb186
     name: aigw-ui
     urls:
-    - https://sorinboia.github.com/helm-aigw-ui/aigw-ui-0.1.0.tgz
+    - https://sorinboia.github.io/helm-aigw-ui/aigw-ui-0.1.0.tgz
     version: 0.1.0
 generated: "2025-03-27T12:08:35.114003411+02:00"
