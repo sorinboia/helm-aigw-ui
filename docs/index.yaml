@@ -1,0 +1,13 @@
+apiVersion: v1
+entries:
+  aigw-ui:
+  - apiVersion: v2
+    appVersion: "1.0"
+    created: "2025-03-27T12:08:35.12461475+02:00"
+    description: A Helm chart for AI Gateway components
+    digest: 8662feb95b9e68050073db0e3b2e741b6d9dd8cb0fef3810cc31ae3a73feb186
+    name: aigw-ui
+    urls:
+    - https://sorinboia.github.com/helm-aigw-ui/aigw-ui-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-03-27T12:08:35.114003411+02:00"
